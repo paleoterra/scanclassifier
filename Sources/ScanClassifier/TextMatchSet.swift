@@ -12,15 +12,30 @@ public struct TextMatchSet: Codable {
     public let matchers: [TextMatcher]
     public let isRequired: Bool
 
-    func match(for document: PDFDocument) -> MatchType {
-        let firstMatcher = matchers.first { matcher in
-            matcher.match(for: document)
+    func match(for document: PDFSource) async -> MatchType {
+        let matches = await matchers.asyncMap { matcher in
+            await matcher.match(for: document)
         }
+        let failed = matches.compactMap { $0 == true ? nil : false }
         if isRequired {
-            return firstMatcher != nil ? .match : .failed
+            return failed.isEmpty ? .match : .failed
         } else {
-            return firstMatcher != nil ? .optionalMatch : .optionalFailed
+            return failed.isEmpty ? .optionalMatch : .optionalFailed
         }
 
+    }
+}
+
+extension Sequence {
+    func asyncMap<T>(
+        _ transform: (Element) async throws -> T
+    ) async rethrows -> [T] {
+        var values = [T]()
+
+        for element in self {
+            try await values.append(transform(element))
+        }
+
+        return values
     }
 }

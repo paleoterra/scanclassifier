@@ -1,9 +1,16 @@
 import Foundation
 import PDFKit
 
-public actor PDFSource {
+public protocol PDFSourceProtocol {
+    func pageWidth(for page: Int) async -> CGFloat
+    func text(for source: PDFContentSource?) async -> String
+
+}
+
+public actor PDFSource: PDFSourceProtocol {
     var pdfFile: PDFDocument
     var textCache: [String: Task<String, Never>] = [:]
+    private let allTextKey = "allTextKey"
 
     public init(pdfDocument: PDFDocument) {
         self.pdfFile = pdfDocument
@@ -16,8 +23,15 @@ public actor PDFSource {
         self.pdfFile = file
     }
 
-    public func text(for source: PDFContentSource) async -> String {
-        if let content = textCache[source.descriptionString] {
+    public func pageWidth(for page: Int = 0) -> CGFloat {
+        guard let page = pdfFile.page(at: page) else {
+            return 0
+        }
+        return page.bounds(for: .mediaBox).width
+    }
+
+    public func text(for source: PDFContentSource?) async -> String {
+        if let content = textCache[source?.descriptionString ?? allTextKey] {
             return await content.value
         } else {
             if let sourceRect = source as? PDFContentRect {
@@ -32,8 +46,13 @@ public actor PDFSource {
                 }
                 textCache[sourceRange.descriptionString] = task
                 return await task.value
+            } else {
+                let task = Task {
+                    return allText()
+                }
+                textCache[allTextKey] = task
+                return await task.value
             }
-            return ""
         }
     }
 
@@ -64,6 +83,16 @@ public actor PDFSource {
         }
         if source.removeWhitespace {
             content = remoteWhiteSpace(from: content)
+        }
+        return content
+    }
+
+    private func allText() -> String {
+        var content = ""
+        for pageNumber in 0..<pdfFile.pageCount {
+            if let page = pdfFile.page(at: pageNumber) {
+                content = content + (page.string ?? "")
+            }
         }
         return content
     }

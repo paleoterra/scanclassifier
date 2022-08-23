@@ -155,6 +155,11 @@ class PDFSourceTest: XCTestCase {
         XCTAssertEqual(result, "Page2TopRightTextBoxCattycatsfromCartland")
     }
 
+    func test_textUnspecified_theReturnAllText() async {
+        let result = await testObject?.text(for: nil)
+        XCTAssertEqual(result, page1Content + page2Content)
+    }
+
     func test_asynctest_givenMultipleCalls_thenReturnCached() async {
         let rect = PDFContentRect(rect: CGRect(x: 0.5,
                                                y: 0.5,
@@ -170,5 +175,22 @@ class PDFSourceTest: XCTestCase {
         XCTAssertEqual(result2, "Page2TopRightTextBoxCattycatsfromCartland")
         XCTAssertEqual(result3, "Page2TopRightTextBoxCattycatsfromCartland")
         XCTAssertEqual(result4, "Page2TopRightTextBoxCattycatsfromCartland")
+    }
+
+    // MARK: - Page Width
+
+    func test_pageWidth_givenSouce_thenReturnValue() async {
+        let width = await testObject?.pageWidth()
+        XCTAssertEqual(width, 612)
+    }
+
+    func test_pageWidth_givenSoucePage0_thenReturnValue() async {
+        let width = await testObject?.pageWidth(for: 0)
+        XCTAssertEqual(width, 612)
+    }
+
+    func test_pageWidth_givenSoucePage1_thenReturnValue() async {
+        let width = await testObject?.pageWidth(for: 1)
+        XCTAssertEqual(width, 612)
     }
 }

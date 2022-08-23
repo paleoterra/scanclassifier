@@ -1,12 +1,21 @@
 import Foundation
 import PDFKit
 
-public struct DocumentType: Codable {
-    public var className: String
-    public var textMatchers: TypeMatcher
+public struct DocumentType: Codable, Identifiable {
+    public var id: String = UUID().uuidString
 
-    func match(for document: PDFDocument) -> TypeMatchScore {
-        textMatchers.match(for: document)
+    public var className: String
+    public var typeMatcher: TypeMatcher
+
+    public init(className: String = "Unnamed",
+                textMatchers: TypeMatcher = TypeMatcher(textMatchSets: [], documentWidth: .anySize)) {
+        self.className = className
+        self.typeMatcher = textMatchers
     }
+
+    func match(for document: PDFDocument) async -> TypeMatchScore {
+        await typeMatcher.match(for: document)
+    }
+
 
 }

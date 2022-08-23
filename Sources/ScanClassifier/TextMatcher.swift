@@ -7,8 +7,11 @@
 
 import Foundation
 import PDFKit
+protocol TextMatcherProtocol {
+    func match(for document: PDFSourceProtocol) async -> Bool
+}
 
-public struct TextMatcher: Codable {
+public struct TextMatcher: TextMatcherProtocol, Codable {
     public enum TextMatchOption: String, Codable {
         case caseInsensitive
         case regularExpression
@@ -20,20 +23,32 @@ public struct TextMatcher: Codable {
     public var contentRect: PDFContentRect?
     public var contentRange: PDFContentPageRange?
 
-    func match(for document: PDFDocument) -> Bool {
-//        var contentString = ""
-//        if let contentRect = contentRect {
-//            contentString = contentRect.extractPDFContent(from: document)
-//        } else if let contentRange = contentRange {
-//            contentString = contentRange.extractPDFContent(from: document)
-//        } else {
-//            contentString = document.string ?? ""
-//        }
-//
-//        if clearWhiteSpace {
-//            contentString = contentString.filter { !$0.isWhitespace }
-//        }
-//        return contentString.range(of: text, options: .caseInsensitive, range: nil, locale: nil) != nil
-        return false
+    public init(text: String,
+                matchingOption: TextMatchOption?,
+                clearWhiteSpace: Bool,
+                contentRect: PDFContentRect?,
+                contentRange: PDFContentPageRange?) {
+        self.text = text
+        self.matchingOption = matchingOption
+        self.clearWhiteSpace = clearWhiteSpace
+        self.contentRect = contentRect
+        self.contentRange = contentRange
+    }
+
+    func match(for document: PDFSourceProtocol) async -> Bool {
+        var contentString = await document.text(for: contentRule())
+        if clearWhiteSpace {
+            contentString = contentString.filter { !$0.isWhitespace }
+        }
+        return contentString.range(of: text, options: .caseInsensitive, range: nil, locale: nil) != nil
+    }
+
+    private func contentRule() -> PDFContentSource? {
+        if let sourceRect = contentRect {
+            return sourceRect
+        } else if let sourceRange = contentRange {
+            return sourceRange
+        }
+        return nil
     }
 }
