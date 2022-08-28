@@ -17,16 +17,13 @@ class MockPDFSource: PDFSourceProtocol {
         return pageWidthReturnValue
     }
 
-    var capturedPDFContentSourceRect: PDFContentRect?
-    var capturedPDFContentSourceRange: PDFContentPageRange?
+    var capturedPDFContentSource: PDFContentSource?
     var textForCalled = false
     var textStringToReturn = ""
     func text(for source: ScanClassifier.PDFContentSource?) async -> String {
         textForCalled = true
-        if let capturedRect = source as? PDFContentRect {
-            capturedPDFContentSourceRect = capturedRect
-        } else if let range = source as? PDFContentPageRange {
-            capturedPDFContentSourceRange = range
+        if let capturedSource = source  {
+            capturedPDFContentSource = capturedSource
         }
         return textStringToReturn
     }

@@ -21,12 +21,11 @@ public struct TypeMatcher: Codable, Identifiable {
         self.documentWidth = documentWidth
     }
 
-    func match(for document: PDFDocument) async -> TypeMatchScore {
-        let pdfSource = PDFSource(pdfDocument: document)
+    func match(for document: PDFSourceProtocol, verbose: Bool) async -> TypeMatchScore {
         var matches: [MatchType] = []
-        matches.append(documentWidth.match(width: await pdfSource.pageWidth()))
+        matches.append(documentWidth.match(width: await document.pageWidth(for: 0), verbose: verbose))
         matches.append(contentsOf: await textMatchSets.asyncMap { matchSet in
-            await matchSet.match(for: pdfSource)
+            await matchSet.match(for: document, verbose: verbose)
         })
         return TypeMatchScore(results: matches)
 

@@ -4,7 +4,6 @@ import PDFKit
 public protocol PDFSourceProtocol {
     func pageWidth(for page: Int) async -> CGFloat
     func text(for source: PDFContentSource?) async -> String
-
 }
 
 public actor PDFSource: PDFSourceProtocol {
@@ -23,7 +22,7 @@ public actor PDFSource: PDFSourceProtocol {
         self.pdfFile = file
     }
 
-    public func pageWidth(for page: Int = 0) -> CGFloat {
+    public func pageWidth(for page: Int = 0) async -> CGFloat {
         guard let page = pdfFile.page(at: page) else {
             return 0
         }
@@ -34,19 +33,13 @@ public actor PDFSource: PDFSourceProtocol {
         if let content = textCache[source?.descriptionString ?? allTextKey] {
             return await content.value
         } else {
-            if let sourceRect = source as? PDFContentRect {
+            if let contentSource = source {
                 let task = Task {
-                    return text(for: sourceRect)
+                    return text(for: contentSource)
                 }
-                textCache[sourceRect.descriptionString] = task
+                textCache[contentSource.descriptionString] = task
                 return await task.value
-            } else if let sourceRange = source as? PDFContentPageRange {
-                let task = Task {
-                    return text(for: sourceRange)
-                }
-                textCache[sourceRange.descriptionString] = task
-                return await task.value
-            } else {
+            }  else {
                 let task = Task {
                     return allText()
                 }
@@ -56,35 +49,34 @@ public actor PDFSource: PDFSourceProtocol {
         }
     }
 
-    private func text(for source: PDFContentRect) -> String {
+    private func text(for source: PDFContentSource) -> String {
         var content: String = ""
-        if let page = pdfFile.page(at: source.page) {
-            let pageRect = calculateRect(for: page, rect: source.rect)
-            if let selection = page.selection(for: pageRect), let result = selection.string {
-                content = result
+        if source.start > source.end {
+            return ""
+        }
+        for page in source.start...source.end {
+
+            if let page = pdfFile.page(at: page) {
+                if let rect = source.rect {
+                    content.append(text(page: page, rect: rect))
+                } else {
+                    content.append(page.string ?? "")
+                }
             }
         }
-
         if source.removeWhitespace {
             content = remoteWhiteSpace(from: content)
         }
         return content
     }
 
-    private func text(for source: PDFContentPageRange) -> String {
-        var content: String = ""
-        if source.start > source.end {
-            return ""
+    private func text(page: PDFPage, rect: CGRect) -> String {
+        let pageRect = calculateRect(for: page, rect: rect)
+        if let selection = page.selection(for: pageRect), let result = selection.string {
+            return result
         }
-        for page in source.start...source.end {
-            if let page = pdfFile.page(at: page), let pageContent = page.string {
-                content.append(pageContent)
-            }
-        }
-        if source.removeWhitespace {
-            content = remoteWhiteSpace(from: content)
-        }
-        return content
+        return ""
+
     }
 
     private func allText() -> String {

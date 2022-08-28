@@ -70,43 +70,43 @@ class PDFSourceTest: XCTestCase {
     // MARK: - TEXT FOR RANGE
 
     func test_textForRange_givenAllPages_ReturnAllText() async {
-        let range = PDFContentPageRange(start: 0, end: 1)
+        let range = PDFContentSource(start: 0, end: 1, rect: nil)
         let result = await testObject?.text(for: range)
         XCTAssertEqual(result, fullContent)
     }
 
     func test_textForRange_givenFirstPage_ReturnPage1() async {
-        let range = PDFContentPageRange(start: 0, end: 0)
+        let range = PDFContentSource(start: 0, end: 0, rect: nil)
         let result = await testObject?.text(for: range)
         XCTAssertEqual(result, page1Content)
     }
 
     func test_textForRange_givenLastPage_ReturnPage2() async {
-        let range = PDFContentPageRange(start: 1, end: 1)
+        let range = PDFContentSource(start: 1, end: 1, rect: nil)
         let result = await testObject?.text(for: range)
         XCTAssertEqual(result, page2Content)
     }
 
     func test_textForRange_givenInvalidEndBeforeBegin_ReturnEmpty() async {
-        let range = PDFContentPageRange(start: 1, end: 0)
+        let range = PDFContentSource(start: 1, end: 0, rect: nil)
         let result = await testObject?.text(for: range)
         XCTAssertEqual(result, "")
     }
 
     func test_textForRange_givenStartBeyondDocument_ReturnEmpty() async {
-        let range = PDFContentPageRange(start: 5, end: 7)
+        let range = PDFContentSource(start: 5, end: 7, rect: nil)
         let result = await testObject?.text(for: range)
         XCTAssertEqual(result, "")
     }
 
     func test_textForRange_givenEndRangeBeyondDocument_ReturnContent() async {
-        let range = PDFContentPageRange(start: 0, end: 7)
+        let range = PDFContentSource(start: 0, end: 7, rect: nil)
         let result = await testObject?.text(for: range)
         XCTAssertEqual(result, fullContent)
     }
 
     func test_textForRange_givenFirstPageRemoveWhitespace_ReturnPage1NoWhitespace() async {
-        let range = PDFContentPageRange(start: 0, end: 0, removeWhitespace: true)
+        let range = PDFContentSource(start: 0, end: 0, rect: nil, removeWhitespace: true)
         let result = await testObject?.text(for: range)
         XCTAssertEqual(result, page1ContentNoWhitespace)
     }
@@ -114,42 +114,38 @@ class PDFSourceTest: XCTestCase {
     // MARK: - Text For Rect
 
     func test_textForRect_givenPage1TopLeftRect_thenReturnExpectedText() async {
-        let rect = PDFContentRect(rect: CGRect(x: 0.0,
+        let rect = PDFContentSource(start: 0, end: 0, rect: CGRect(x: 0.0,
                                                y: 0.5,
                                                width: 0.5,
-                                               height: 0.5),
-                                  page: 0)
+                                               height: 0.5))
         let result = await testObject?.text(for: rect)
         XCTAssertEqual(result, page1TopLeft)
     }
 
     func test_textForRect_givenPage1TopRightRect_thenReturnExpectedText() async {
-        let rect = PDFContentRect(rect: CGRect(x: 0.5,
+        let rect = PDFContentSource(start: 1, end: 1, rect: CGRect(x: 0.5,
                                                y: 0.5,
                                                width: 0.5,
-                                               height: 0.5),
-                                  page: 1)
+                                               height: 0.5))
         let result = await testObject?.text(for: rect)
         XCTAssertEqual(result, page2TopRight)
     }
 
 
     func test_textForRect_giveninvalidPage_thenReturnExpectedText() async {
-        let rect = PDFContentRect(rect: CGRect(x: 0.5,
+        let rect = PDFContentSource(start: 3, end: 3, rect: CGRect(x: 0.5,
                                                y: 0.5,
                                                width: 0.5,
-                                               height: 0.5),
-                                  page: 3)
+                                               height: 0.5))
         let result = await testObject?.text(for: rect)
         XCTAssertEqual(result, "")
     }
 
     func test_textForRect_givenPage1TopRightRectRemoveWhitespace_thenReturnExpectedText() async {
-        let rect = PDFContentRect(rect: CGRect(x: 0.5,
+        let rect = PDFContentSource(start: 1, end: 1, rect: CGRect(x: 0.5,
                                                y: 0.5,
                                                width: 0.5,
                                                height: 0.5),
-                                  page: 1,
                                   removeWhitespace: true)
         let result = await testObject?.text(for: rect)
         XCTAssertEqual(result, "Page2TopRightTextBoxCattycatsfromCartland")
@@ -161,12 +157,11 @@ class PDFSourceTest: XCTestCase {
     }
 
     func test_asynctest_givenMultipleCalls_thenReturnCached() async {
-        let rect = PDFContentRect(rect: CGRect(x: 0.5,
+        let rect = PDFContentSource(start: 1, end: 1, rect: CGRect(x: 0.5,
                                                y: 0.5,
                                                width: 0.5,
                                                height: 0.5),
-                                  page: 1,
-                                  removeWhitespace: true)
+                                    removeWhitespace: true)
         let result1 = await testObject?.text(for: rect)
         let result2 = await testObject?.text(for: rect)
         let result3 = await testObject?.text(for: rect)

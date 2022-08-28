@@ -13,13 +13,11 @@ extension TextMatcher {
     static func stub(text: String = "",
                      matchingOption: TextMatchOption? = nil,
                      clearWhiteSpace: Bool = false,
-                     contentRect: PDFContentRect? = nil,
-                     contentRange: PDFContentPageRange? = nil) -> TextMatcher {
+                     contentSource: PDFContentSource? = nil) -> TextMatcher {
         TextMatcher(text: text,
                     matchingOption: matchingOption,
                     clearWhiteSpace: clearWhiteSpace,
-                    contentRect: contentRect,
-                    contentRange: contentRange)
+                    contentSource: contentSource)
     }
 }
 
@@ -29,20 +27,17 @@ final class TextMatcherTest: XCTestCase {
     var mockPDFSource = MockPDFSource()
 
     func test_givenNoText_thenReturnMFalse() async {
-        let result = await testObject.match(for: mockPDFSource)
-        XCTAssertNil(mockPDFSource.capturedPDFContentSourceRect)
-        XCTAssertNil(mockPDFSource.capturedPDFContentSourceRange)
+        let result = await testObject.match(for: mockPDFSource, verbose: false)
+        XCTAssertNil(mockPDFSource.capturedPDFContentSource)
         XCTAssertTrue(mockPDFSource.textForCalled)
-
         XCTAssertFalse(result)
     }
 
     func test_givenMatchingText_thenReturnTrue() async {
         testObject = TextMatcher.stub(text: "Doom")
         mockPDFSource.textStringToReturn = "Doom"
-        let result = await testObject.match(for: mockPDFSource)
-        XCTAssertNil(mockPDFSource.capturedPDFContentSourceRect)
-        XCTAssertNil(mockPDFSource.capturedPDFContentSourceRange)
+        let result = await testObject.match(for: mockPDFSource, verbose: false)
+        XCTAssertNil(mockPDFSource.capturedPDFContentSource)
         XCTAssertTrue(mockPDFSource.textForCalled)
 
         XCTAssertTrue(result)
@@ -51,9 +46,8 @@ final class TextMatcherTest: XCTestCase {
     func test_givenMatchingText_givenDifferentCases_thenReturnTrue() async {
         testObject = TextMatcher.stub(text: "doom")
         mockPDFSource.textStringToReturn = "DOOM"
-        let result = await testObject.match(for: mockPDFSource)
-        XCTAssertNil(mockPDFSource.capturedPDFContentSourceRect)
-        XCTAssertNil(mockPDFSource.capturedPDFContentSourceRange)
+        let result = await testObject.match(for: mockPDFSource, verbose: false)
+        XCTAssertNil(mockPDFSource.capturedPDFContentSource)
         XCTAssertTrue(mockPDFSource.textForCalled)
 
         XCTAssertTrue(result)
@@ -62,9 +56,8 @@ final class TextMatcherTest: XCTestCase {
     func test_givenMatchingText_givenWhitespaceIssue_DontHandleWhitespace_thenReturnFalse() async {
         testObject = TextMatcher.stub(text: "doomindream")
         mockPDFSource.textStringToReturn = "DOOM in dream"
-        let result = await testObject.match(for: mockPDFSource)
-        XCTAssertNil(mockPDFSource.capturedPDFContentSourceRect)
-        XCTAssertNil(mockPDFSource.capturedPDFContentSourceRange)
+        let result = await testObject.match(for: mockPDFSource, verbose: false)
+        XCTAssertNil(mockPDFSource.capturedPDFContentSource)
         XCTAssertTrue(mockPDFSource.textForCalled)
 
         XCTAssertFalse(result)
@@ -73,35 +66,34 @@ final class TextMatcherTest: XCTestCase {
     func test_givenMatchingText_givenWhitespaceIssue_thenReturnTrue() async {
         testObject = TextMatcher.stub(text: "doomindream", clearWhiteSpace: true)
         mockPDFSource.textStringToReturn = "DOOM in dream"
-        let result = await testObject.match(for: mockPDFSource)
-        XCTAssertNil(mockPDFSource.capturedPDFContentSourceRect)
-        XCTAssertNil(mockPDFSource.capturedPDFContentSourceRange)
+        let result = await testObject.match(for: mockPDFSource, verbose: false)
+        XCTAssertNil(mockPDFSource.capturedPDFContentSource)
         XCTAssertTrue(mockPDFSource.textForCalled)
 
         XCTAssertTrue(result)
     }
 
     func test_givenMatchingText_givenRect_thenReturnTrue() async {
-        let testRect = PDFContentRect(rect: CGRect.zero, page: 1)
-        testObject = TextMatcher.stub(text: "doom in dream", contentRect: testRect)
+        let testSource = PDFContentSource(start: 1, end: 1, rect: CGRect.zero)
+        testObject = TextMatcher.stub(text: "doom in dream", contentSource: testSource)
         mockPDFSource.textStringToReturn = "DOOM in dream"
-        let result = await testObject.match(for: mockPDFSource)
-        XCTAssertEqual(testRect.rect, mockPDFSource.capturedPDFContentSourceRect?.rect ?? CGRect(x: 10, y: 10, width: 10, height: 10))
-        XCTAssertEqual(testRect.page, mockPDFSource.capturedPDFContentSourceRect?.page ?? -1)
-        XCTAssertNil(mockPDFSource.capturedPDFContentSourceRange)
+        let result = await testObject.match(for: mockPDFSource, verbose: false)
+        XCTAssertEqual(testSource.rect, mockPDFSource.capturedPDFContentSource?.rect ?? CGRect(x: 10, y: 10, width: 10, height: 10))
+        XCTAssertEqual(testSource.start, mockPDFSource.capturedPDFContentSource?.start ?? -1)
+        XCTAssertEqual(testSource.end, mockPDFSource.capturedPDFContentSource?.end ?? -1)
         XCTAssertTrue(mockPDFSource.textForCalled)
 
         XCTAssertTrue(result)
     }
 
     func test_givenMatchingText_givenRange_thenReturnTrue() async {
-        let testRange = PDFContentPageRange(start: 0, end: 1)
-        testObject = TextMatcher.stub(text: "doom in dream", contentRange: testRange)
+        let testSource = PDFContentSource(start: 0, end: 1, rect: nil)
+        testObject = TextMatcher.stub(text: "doom in dream", contentSource: testSource)
         mockPDFSource.textStringToReturn = "DOOM in dream"
-        let result = await testObject.match(for: mockPDFSource)
-        XCTAssertEqual(testRange.start, mockPDFSource.capturedPDFContentSourceRange?.start ?? -1)
-        XCTAssertEqual(testRange.end, mockPDFSource.capturedPDFContentSourceRange?.end ?? -1)
-        XCTAssertNil(mockPDFSource.capturedPDFContentSourceRect)
+        let result = await testObject.match(for: mockPDFSource, verbose: false)
+        XCTAssertEqual(testSource.start, mockPDFSource.capturedPDFContentSource?.start ?? -1)
+        XCTAssertEqual(testSource.end, mockPDFSource.capturedPDFContentSource?.end ?? -1)
+        XCTAssertNil(mockPDFSource.capturedPDFContentSource?.rect)
         XCTAssertTrue(mockPDFSource.textForCalled)
 
         XCTAssertTrue(result)

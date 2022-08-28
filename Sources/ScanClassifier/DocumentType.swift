@@ -13,8 +13,8 @@ public struct DocumentType: Codable, Identifiable {
         self.typeMatcher = textMatchers
     }
 
-    func match(for document: PDFDocument) async -> TypeMatchScore {
-        await typeMatcher.match(for: document)
+    func match(for document: PDFSourceProtocol, verbose: Bool) async -> TypeMatchScore {
+        await typeMatcher.match(for: document, verbose: verbose)
     }
 
 

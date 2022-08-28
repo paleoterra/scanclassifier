@@ -8,7 +8,7 @@
 import Foundation
 import PDFKit
 protocol TextMatcherProtocol {
-    func match(for document: PDFSourceProtocol) async -> Bool
+    func match(for document: PDFSourceProtocol, verbose: Bool) async -> Bool
 }
 
 public struct TextMatcher: TextMatcherProtocol, Codable {
@@ -20,35 +20,25 @@ public struct TextMatcher: TextMatcherProtocol, Codable {
     public var text: String
     public var matchingOption: TextMatchOption?
     public var clearWhiteSpace: Bool
-    public var contentRect: PDFContentRect?
-    public var contentRange: PDFContentPageRange?
+    public var contentSource: PDFContentSource?
 
     public init(text: String,
                 matchingOption: TextMatchOption?,
                 clearWhiteSpace: Bool,
-                contentRect: PDFContentRect?,
-                contentRange: PDFContentPageRange?) {
+                contentSource: PDFContentSource?) {
         self.text = text
         self.matchingOption = matchingOption
         self.clearWhiteSpace = clearWhiteSpace
-        self.contentRect = contentRect
-        self.contentRange = contentRange
+        self.contentSource = contentSource
     }
 
-    func match(for document: PDFSourceProtocol) async -> Bool {
-        var contentString = await document.text(for: contentRule())
+    func match(for document: PDFSourceProtocol, verbose: Bool) async -> Bool {
+        var contentString = await document.text(for: contentSource)
         if clearWhiteSpace {
             contentString = contentString.filter { !$0.isWhitespace }
         }
-        return contentString.range(of: text, options: .caseInsensitive, range: nil, locale: nil) != nil
-    }
-
-    private func contentRule() -> PDFContentSource? {
-        if let sourceRect = contentRect {
-            return sourceRect
-        } else if let sourceRange = contentRange {
-            return sourceRange
-        }
-        return nil
+        let result = contentString.range(of: text, options: .caseInsensitive, range: nil, locale: nil) != nil
+        Logging.verbosePrint(verbose: verbose, content: "Matching String: \(text), cleared whitespace: \(clearWhiteSpace),  result: \(result)")
+        return result
     }
 }
