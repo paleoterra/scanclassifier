@@ -74,4 +74,13 @@ final class DateStrategyTest: XCTestCase {
         XCTAssertEqual(result, example1Date2)
     }
 
+    func test_json() throws {
+        let testObject = DateStrategy(contentSource: PDFContentSource(start: 0, end: 1, rect: CGRect(x: 0, y: 0, width: 45, height: 45), removeWhitespace: true),
+                                      leadingText: "leading",
+                                      trailingText: "trailing",
+                                      order: .newest)
+        let data = try JSONEncoder().encode(testObject)
+        let string = String(data: data, encoding: .utf8)!
+        print(string)
+    }
 }

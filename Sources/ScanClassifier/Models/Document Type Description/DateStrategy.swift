@@ -14,7 +14,7 @@ public enum DateSelectionOrder: String, Codable {
     case oldest
 }
 
-public struct DateStrategy {
+public struct DateStrategy: Codable {
     public let contentSource: PDFContentSource?
     public let leadingText: String?
     public let trailingText: String?
@@ -33,14 +33,14 @@ public struct DateStrategy {
     }
 
     public func dateString(for document: PDFSourceProtocol, verbose: Bool) async -> String {
-        return await dateText(for: document)
+        return await dateText(for: document, verbose: verbose)
     }
 
-    private func dateText(for document: PDFSourceProtocol) async -> String {
+    private func dateText(for document: PDFSourceProtocol, verbose: Bool) async -> String {
         var text = await document.text(for: contentSource)
         text = removeLeading(from: text)
         text = removeTrailing(from: text)
-        let dates = findDates(in: text)
+        let dates = findDates(in: text, verbose: verbose)
         if dates.isEmpty {
             return ""
         }
@@ -77,7 +77,8 @@ public struct DateStrategy {
         }
     }
 
-    private func findDates(in text: String) -> [Date] {
+    private func findDates(in text: String, verbose: Bool) -> [Date] {
+        Logging.verbosePrint(verbose: verbose, content: "Find dates in:]n \(text)")
         var allDates: [Date] = []
         guard let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.date.rawValue) else {
             return allDates
@@ -85,7 +86,8 @@ public struct DateStrategy {
         let matches = detector.matches(in: text, options: [],
                                        range: NSRange(location: 0, length: text.utf16.count))
         allDates = matches.compactMap({ result in
-            result.date
+            Logging.verbosePrint(verbose: verbose, content: "Date \(String(describing: result.date))")
+            return result.date
         })
         return allDates
     }
