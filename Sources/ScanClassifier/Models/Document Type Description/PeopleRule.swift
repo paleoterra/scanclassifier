@@ -23,7 +23,8 @@ public struct PeopleRule: Codable {
     }
 
     private func peopleText(for document: PDFSourceProtocol, verbose: Bool) async -> String {
-        return await document.text(for: contentSource)
+        let text = await document.text(for: contentSource)
+        return text.replacingOccurrences(of: "\n", with: " ")
     }
 
     private func processPerson(person: People, text: String) -> String? {

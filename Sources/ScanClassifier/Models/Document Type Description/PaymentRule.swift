@@ -29,8 +29,8 @@ public struct PaymentRule: Codable {
     }
 
     private func processPayment(payment: Payment, prefixes: [String], text: String, verbose: Bool) -> Bool {
-        if let _ = prefixes.first(where: { prefix in
-            text.contains("\(prefix)\(payment.code)")
+        if let _ = prefixes.first(where: { textPrefix in
+            text.range(of: textPrefix, options: .caseInsensitive, range: nil, locale: nil) != nil
         }) {
             Logging.verbosePrint(verbose: verbose, content: "Matched Payment: \(payment.tag)")
             return true

@@ -49,6 +49,36 @@ public actor PDFSource: PDFSourceProtocol {
         }
     }
 
+//    public func containsMatch(for matchString: String, options: String.CompareOptions, source: PDFContentSource?) -> Bool {
+//        let matches = pdfFile.findString(matchString, withOptions: options)
+//        guard !matches.isEmpty else {
+//            return false
+//        }
+//        guard let source = source else {
+//            return true
+//        }
+//        let validPages = (source.start...source.end).compactMap { page in
+//            if page < pdfFile.pageCount {
+//                return pdfFile.page(at: page)
+//            }
+//            return nil
+//        }
+//        let result = matches.compactMap { selection in
+//            if let first = selection.pages.first, validPages.contains(first) {
+//                if let rect = source.rect {
+//                    let pageBounds = first.bounds(for: .mediaBox)
+//                    let newRect = CGRect(x: rect.origin.x * pageBounds.size.width,
+//                                         y: rect.origin.y * pageBounds.size.height,
+//                                         width: rect.size.width * pageBounds.size.width,
+//                                         height: rect.size.height * pageBounds.size.height)
+//                    selection.
+//                }
+//            }
+//            return false
+//        }
+//
+//    }
+
     private func text(for source: PDFContentSource) -> String {
         var content: String = ""
         if source.start > source.end {

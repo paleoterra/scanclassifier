@@ -33,9 +33,9 @@ public class SourceClassifier {
 
         try setDocumentTypes(from: documentTypesDirectory)
 
-        if let peopleUrl = peopleRulesFileOrDirectory {
-            try setPeopleRules(from: peopleUrl)
-        }
+        try setPaymentRules(from: paymentFileOrDirectory)
+
+        try setPeopleRules(from: peopleRulesFileOrDirectory)
     }
 
     convenience public init(rulesDirectory: URL) throws {
@@ -103,7 +103,8 @@ public class SourceClassifier {
 
     // MARK: - Payment
 
-    private func setPaymentRules(from url: URL) throws {
+    private func setPaymentRules(from url: URL?) throws {
+        guard let url = url else { return }
         let paymentURLS = try locateRules(url: url, pathExtension: ClassifierExtensions.paymentRules.rawValue)
         loadPayment(urls: paymentURLS)
     }
@@ -126,7 +127,8 @@ public class SourceClassifier {
 
     // MARK: - People
 
-    private func setPeopleRules(from url: URL) throws {
+    private func setPeopleRules(from url: URL?) throws {
+        guard let url = url else { return }
         let peopleURLS = try locateRules(url: url, pathExtension: ClassifierExtensions.peopleRules.rawValue)
         loadPeople(urls: peopleURLS)
     }
@@ -167,7 +169,7 @@ public class SourceClassifier {
         guard let matchType = matchType else {
             return nil
         }
-        var result = DocumentTypeMatchResult(dateString: "", mainTags: [], paymentTag: nil, peopleTags: [])
+        var result = DocumentTypeMatchResult(dateString: "", mainTags: [], paymentTag: nil, peopleTags: [], className: matchType.className)
         result.dateString = await matchType.dateString(for: pdf, verbose: verbose)
         result.mainTags = matchType.tags
         result.peopleTags = await matchType.peopleTags(for: pdf, people: people, verbose: verbose)

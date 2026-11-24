@@ -12,6 +12,7 @@ public struct DocumentTypeMatchResult {
     public var mainTags: [String]
     public var paymentTag: String?
     public var peopleTags: [String]
+    public var className: String
 
     public func allTags() -> [String] {
         var tags = mainTags + peopleTags
